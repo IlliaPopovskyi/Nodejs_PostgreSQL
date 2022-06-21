@@ -1,0 +1,12 @@
+{
+    "type": "postgres",
+	"host": "localhost",
+	"port": 5432,
+	"username": "postgres",
+	"password": "nfrbu2019",
+	"database": "node_postgres",
+	"synchronize": false,
+	"logging": false,
+	"migrations": ["src/db/migrations/*.ts"],
+	"enities": ["src/db/enities/*.ts"]
+}
