@@ -2,7 +2,9 @@ import * as express from 'express';
 
 import basicEditGroupSchema from '../validators/baseValidators/basicEditGroupSchema';
 import createGroupSchema from '../validators/groupValidators/createGroupSchema';
+import createPostSchema from '../validators/postValidators/createPostSchema';
 import paginationSchema from '../validators/baseValidators/paginationSchema';
+import idGroupSchema from '../validators/groupValidators/idGroupSchema';
 import photoSchema from '../validators/baseValidators/photoSchema';
 import idSchema from '../validators/baseValidators/idSchema';
 
@@ -30,14 +32,14 @@ groupRouter.get(
 groupRouter.delete(
 	'/remove',
 	auth.userAuthToken,
-	validation(idSchema.required, 'query'),
+	validation(idGroupSchema, 'query'),
 	groupController.removeGroup,
 );
 
 groupRouter.put(
 	'/basicUpdate',
 	auth.userAuthToken,
-	validation(idSchema.required, 'query'),
+	validation(idGroupSchema, 'query'),
 	validation(basicEditGroupSchema, 'body'),
 	groupController.baseEditGroup,
 );
@@ -45,7 +47,25 @@ groupRouter.put(
 groupRouter.post(
 	'/photo',
 	auth.userAuthToken,
+	validation(idGroupSchema, 'query'),
 	validation(photoSchema.required, 'body'),
 	groupController.setPhoto,
 );
+
+groupRouter.post(
+	'/post',
+	auth.userAuthToken,
+	validation(idGroupSchema, 'query'),
+	validation(createPostSchema, 'body'),
+	groupController.createPost,
+);
+
+groupRouter.delete(
+	'/post',
+	auth.userAuthToken,
+	validation(idGroupSchema, 'query'),
+	validation(idSchema.required, 'query'),
+	groupController.removePost,
+);
+
 export default groupRouter;

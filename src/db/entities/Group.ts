@@ -10,6 +10,7 @@ import {
 	OneToMany,
 	ManyToMany,
 	ManyToOne,
+	JoinTable,
 } from 'typeorm';
 
 import { EAccessGroup, ETypeBlog } from '../../enums/groupEnums';
@@ -49,7 +50,7 @@ export default class Group extends BaseEntity {
 	admin: User;
 
 	@ManyToMany(() => User, user => user.moder_groups)
-	@JoinColumn()
+	@JoinTable()
 	moderators: User[];
 	// user
 

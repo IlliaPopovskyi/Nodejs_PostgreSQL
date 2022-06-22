@@ -68,10 +68,9 @@ export default {
 		try {
 			const { profileId } = req;
 			const { name, title } = req.body;
-			const { id } = req.query;
 			const group = await Group.findOne({
 				where: {
-					id,
+					id: req.query.group,
 				},
 				relations: ['members', 'admin', 'mainPhoto', 'photos'],
 			});
@@ -99,7 +98,7 @@ export default {
 			const { profileId } = req;
 			const group = await Group.findOne({
 				where: {
-					id: req.query.id,
+					id: req.query.group,
 				},
 				relations: ['members', 'admin', 'mainPhoto', 'photos'],
 			});
@@ -127,7 +126,7 @@ export default {
 			const { profileId } = req;
 			const group = await Group.findOne({
 				where: {
-					id: req.query.id,
+					id: req.query.group,
 				},
 				relations: ['members', 'admin', 'mainPhoto', 'photos'],
 			});
@@ -162,7 +161,7 @@ export default {
 	): Promise<void> {
 		try {
 			const { profileId } = req;
-			const group = await Group.findOne(req.query.id.toString(), {
+			const group = await Group.findOne(req.query.group.toString(), {
 				relations: ['admin', 'moderators'],
 			});
 			if (!group) {
@@ -200,7 +199,7 @@ export default {
 	): Promise<void> {
 		try {
 			const { profileId } = req;
-			const group = await Group.findOne(req.query.id.toString(), {
+			const group = await Group.findOne(req.query.group.toString(), {
 				relations: ['admin', 'moderators'],
 			});
 			if (!group) {
@@ -242,7 +241,7 @@ export default {
 	): Promise<void> {
 		try {
 			const { profileId } = req;
-			const group = await Group.findOne(+req.query.id, {
+			const group = await Group.findOne(+req.query.group, {
 				relations: ['admin', 'moderators'],
 			});
 			if (!group) {
@@ -271,7 +270,7 @@ export default {
 						text: req.body.text,
 						title: req.body.title,
 						creator: user,
-						typePost: ETypePost.group,
+						type_post: ETypePost.group,
 					});
 					group.posts.push(post);
 					await group.save();
@@ -281,13 +280,47 @@ export default {
 					text: req.body.text,
 					title: req.body.title,
 					creator: user,
-					typePost: ETypePost.group,
+					type_post: ETypePost.group,
 				});
 				group.posts.push(post);
 				await group.save();
 			}
 
 			await group.save();
+		} catch (err) {
+			next(err);
+		}
+	},
+
+	async removePost(
+		req: IReqWithToken,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const { profileId } = req;
+			const group = await Group.findOne(+req.query.group, {
+				relations: ['posts', 'admin', 'moderators'],
+			});
+			if (group.admin.id !== profileId) {
+				let includes = false;
+				for (let i = 0; i < group.moderators.length; i++) {
+					if (group.moderators[i].id === +req.query.user) {
+						includes = true;
+						break;
+					}
+				}
+				if (includes === false) {
+					throw ApiError.Forbidden(
+						'You are not includes in administration this group!',
+					);
+				}
+			}
+			group.posts = group.posts.filter(
+				post => post.id !== +req.query.post,
+			);
+			await group.save();
+			res.json({ success: true });
 		} catch (err) {
 			next(err);
 		}

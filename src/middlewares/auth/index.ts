@@ -5,6 +5,8 @@ import verifyToken from '../../helpers/token/verifyToken';
 
 import { IReqWithToken } from '../../controllers/interfaces';
 
+import User from '../../db/entities/User';
+
 export default {
 	async userAuthToken(
 		req: IReqWithToken,
@@ -23,6 +25,17 @@ export default {
 				const verifiedData = verifyToken(token, 'access');
 				if (!verifiedData) {
 					next(ApiError.UnauthorizedError('invalid access token'));
+				}
+				const user = await User.findOne(
+					{ id: verifiedData.id },
+					{ select: ['id'] },
+				);
+				if (!user) {
+					next(
+						ApiError.UnauthorizedError(
+							'User by id not found, maybe you was removed!',
+						),
+					);
 				}
 				req.profileId = verifiedData.id;
 				next();
@@ -49,6 +62,17 @@ export default {
 				const verifiedData = verifyToken(token, 'verify');
 				if (!verifiedData) {
 					next(ApiError.UnauthorizedError('invalid access token'));
+				}
+				const user = await User.findOne(
+					{ id: verifiedData.id },
+					{ select: ['id'] },
+				);
+				if (!user) {
+					next(
+						ApiError.UnauthorizedError(
+							'User by id not found, maybe you was removed!',
+						),
+					);
 				}
 				req.profileId = verifiedData.id;
 				next();

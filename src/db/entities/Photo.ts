@@ -7,7 +7,6 @@ import {
 	UpdateDateColumn,
 	ManyToOne,
 	OneToOne,
-	JoinColumn,
 } from 'typeorm';
 import Post from './Post';
 import User from './User';
@@ -42,6 +41,9 @@ export default class Photo extends BaseEntity {
 	})
 	access: EAccessTypePhoto;
 
+	@Column({ nullable: true })
+	queue_place: number;
+
 	// post
 	@ManyToOne(() => Post, post => post.photos, {
 		nullable: true,
@@ -53,11 +55,13 @@ export default class Photo extends BaseEntity {
 	// group
 	@ManyToOne(() => Group, group => group.photos, {
 		nullable: true,
+		onDelete: 'CASCADE',
 	})
 	group: Group;
 
 	@OneToOne(() => Group, group => group.main_photo, {
 		nullable: true,
+		onDelete: 'CASCADE',
 	})
 	main_group_photo: Group;
 	// group
@@ -65,6 +69,7 @@ export default class Photo extends BaseEntity {
 	// user
 	@ManyToOne(() => User, user => user.photos, {
 		nullable: true,
+		onDelete: 'CASCADE',
 	})
 	user: User;
 

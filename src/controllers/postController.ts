@@ -1,14 +1,17 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
 import { NextFunction, Response } from 'express';
-import { In, Like, Not } from 'typeorm';
+import { Like, Not } from 'typeorm';
 
 import ApiError from '../errors/apiError';
 import { IReqWithToken } from './interfaces';
+import { IRequestQueuePhoto } from '../interfaces/photoInterface';
 
 import User from '../db/entities/User';
 import Post from '../db/entities/Post';
 import Photo from '../db/entities/Photo';
+import { ETypePhoto } from '../enums/photoEnums';
+import checkValidQueuePhoto from '../utils/checkValidQueuePhoto';
 
 export default {
 	async createPost(
@@ -18,22 +21,33 @@ export default {
 	): Promise<void> {
 		try {
 			const { profileId } = req;
-			const { text } = req.body;
-			const { photos } = req.body;
+			const { text, title, typePost } = req.body;
+			const photos = req.body.photos as IRequestQueuePhoto[];
+			if (photos[0] && photos.length >= 2) {
+				checkValidQueuePhoto(photos);
+			}
 			const user = await User.findOne({ id: profileId });
-			const post = Post.create({ text, creator: user });
+			const post = Post.create({
+				text,
+				title,
+				creator: user,
+				type_post: typePost,
+			});
 			await post.save();
 			if (photos[0]) {
-				const postPhotos = [];
 				for (let i = 0; i < photos.length; i++) {
 					const photo = Photo.create({
-						url: photos[i],
+						url: photos[i].photo,
 						post,
+						photo_type: ETypePhoto.post,
+						queue_place: photos[i].place,
 					});
-					await photo.save();
-					postPhotos.push(photo);
+					if (!post.photos) {
+						post.photos = [photo];
+					} else {
+						post.photos.push(photo);
+					}
 				}
-				post.photos = postPhotos;
 				await post.save();
 			}
 
@@ -52,8 +66,7 @@ export default {
 			const { profileId } = req;
 			const id = req.query.id as unknown as string;
 			const post = await Post.findOne({
-				where: { id, user: { id: profileId } },
-				relations: ['user'],
+				where: { id, creator: { id: profileId } },
 			});
 			if (!post) {
 				throw ApiError.NotFound('Post by id not found');
@@ -118,8 +131,8 @@ export default {
 			const skip = (page - 1) * size;
 			const take = size;
 			const posts = await Post.find({
-				relations: ['user', 'likes'],
-				where: { user: { id: profileId } },
+				relations: ['creator', 'likes', 'photos', 'creator.main_photo'],
+				where: { creator: { id: profileId } },
 				take,
 				skip,
 				order: { created_at: -1 },
