@@ -155,20 +155,23 @@ export default {
 				},
 				{ relations: ['photos', 'main_photo'] },
 			);
+			if (!user) {
+				throw ApiError.NotFound('User by id not found!');
+			}
 			const photos = user.photos;
-			if (user.main_photo) {
+			if (user.main_photo !== null) {
 				photos.sort((a, b) => {
 					if (a.id === user.main_photo.id) {
 						return -1;
 					}
 					if (b.id === user.main_photo.id) {
-						return -1;
+						return 1;
 					}
-					return b.created_at.getTime() - a.created_at.getTime();
+					return b.updated_at.getTime() - a.updated_at.getTime();
 				});
 			} else {
 				photos.sort((a, b) => {
-					return b.created_at.getTime() - a.created_at.getTime();
+					return b.updated_at.getTime() - a.updated_at.getTime();
 				});
 			}
 			res.json({ success: true, photos });
@@ -193,6 +196,8 @@ export default {
 				url: photo,
 				photo_type: ETypePhoto.user,
 			});
+			user.main_photo.updated_at = new Date();
+			await user.save();
 			user.main_photo = newPhoto;
 			user.photos.push(newPhoto);
 			await user.save();
@@ -232,10 +237,11 @@ export default {
 				} else {
 					arrPhotos.sort((a, b) => {
 						return (
-							new Date(b.created_at).getTime() -
-							new Date(a.created_at).getTime()
+							new Date(b.updated_at).getTime() -
+							new Date(a.updated_at).getTime()
 						);
 					});
+					console.log(arrPhotos[0]);
 					user.main_photo = arrPhotos[0];
 					await user.save();
 				}
@@ -260,19 +266,25 @@ export default {
 				where: { id: profileId },
 				relations: ['main_photo', 'photos'],
 			});
-			if (user.main_photo?.id === id) {
+			if (user.main_photo !== null) {
+				const newMainPhoto = await Photo.findOne(id);
+				if (newMainPhoto.user.id !== profileId) {
+					throw ApiError.Forbidden('This is not your photo!');
+				}
+				user.main_photo.updated_at = new Date();
+				await user.save();
+				user.main_photo = newMainPhoto;
+				await user.save();
 				res.json({ success: true });
 			} else {
-				const lastMainPhoto = await Photo.findOne({
-					id: user.main_photo.id,
+				const newMainPhoto = await Photo.findOne(id, {
+					relations: ['user'],
 				});
-				lastMainPhoto.main_user_photo = null;
-				await lastMainPhoto.save();
-				const newMainPhoto = await Photo.findOne({
-					id,
-				});
-				newMainPhoto.main_user_photo = user;
-				await newMainPhoto.save();
+				if (newMainPhoto.user.id !== profileId) {
+					throw ApiError.Forbidden('This is not your photo!');
+				}
+				user.main_photo = newMainPhoto;
+				await user.save();
 				res.json({ success: true });
 			}
 		} catch (err) {
@@ -288,7 +300,7 @@ export default {
 		try {
 			const { profileId } = req;
 			const user = await User.findOne({ id: profileId });
-			await user.remove();
+			await User.remove(user);
 			res.json({ success: true });
 		} catch (err) {
 			next(err);

@@ -23,14 +23,14 @@ export default class Post extends BaseEntity {
 	@PrimaryGeneratedColumn('increment')
 	id: number;
 
-	@Column({ nullable: false, unique: true })
+	@Column({ nullable: false })
 	text: string;
 
 	@Column({ nullable: false })
 	title: string;
 
 	@Column({ enum: ETypePost, nullable: false })
-	typePost: ETypePost;
+	type_post: ETypePost;
 
 	@CreateDateColumn()
 	created_at: Date;
@@ -41,7 +41,10 @@ export default class Post extends BaseEntity {
 	// relations
 
 	// user
-	@ManyToOne(() => User, user => user.posts, { onDelete: 'SET NULL' })
+	@ManyToOne(() => User, user => user.posts, {
+		onDelete: 'SET NULL',
+		cascade: true,
+	})
 	@JoinColumn()
 	creator: User;
 

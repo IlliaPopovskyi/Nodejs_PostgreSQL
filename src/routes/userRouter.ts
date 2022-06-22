@@ -15,54 +15,54 @@ userRouter.get(
 	authMiddleware.userAuthToken,
 	validationMiddleware(paginationSchema, 'query'),
 	userController.findUsers,
-);
+); // worked
 
 userRouter.get(
 	'/profile',
 	authMiddleware.userAuthToken,
 	validationMiddleware(idSchema.optional, 'query'),
 	userController.getProfile,
-);
+); // worked
 
 userRouter.put(
 	'/profile',
 	authMiddleware.userAuthToken,
 	validationMiddleware(updateProfileSchema, 'body'),
 	userController.updateProfile,
-);
+); // worked
 
 userRouter.get(
 	'/photos',
 	authMiddleware.userAuthToken,
 	validationMiddleware(idSchema.optional, 'query'),
 	userController.getPhotos,
-);
+); // worked
 
 userRouter.put(
 	'/photo',
 	authMiddleware.userAuthToken,
 	validationMiddleware(photoSchema.required, 'body'),
 	userController.updatePhoto,
-);
+); // worked
 
 userRouter.delete(
 	'/photo',
 	authMiddleware.userAuthToken,
 	validationMiddleware(idSchema.required, 'query'),
 	userController.removePhoto,
-);
+); // worked
 
 userRouter.put(
 	'/editMainPhoto',
 	authMiddleware.userAuthToken,
 	validationMiddleware(idSchema.required, 'query'),
 	userController.editMainPhoto,
-);
+); // worked
 
 userRouter.delete(
 	'/remove',
 	authMiddleware.userAuthToken,
 	userController.removeAccount,
-);
+); // worked
 
 export default userRouter;
