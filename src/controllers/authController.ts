@@ -11,6 +11,9 @@ import generateAccessToken from '../generators/token/generateAccessToken';
 import generateVerifyCode from '../generators/user/generateVerifyCode';
 import { IReqWithToken } from './interfaces';
 
+import checkUserNameExist from '../utils/checkUserNameExist';
+import checkEmailExist from '../utils/checkEmailExist';
+
 export default {
 	async registration(
 		req: Request,
@@ -19,94 +22,31 @@ export default {
 	): Promise<void> {
 		try {
 			const { userName, email, password } = req.body;
-			const userCandidate = await User.findOne({
-				email,
-				user_name: userName,
+			await checkUserNameExist(userName);
+			await checkEmailExist(email);
+			const users = await User.find({
+				where: [
+					{ user_name: userName, verified: false },
+					{ email, verified: false },
+				],
 			});
-			let includes = false;
-			if (userCandidate?.verified === true) {
-				throw ApiError.BadRequest(
-					'User with email and userName already exist',
-				);
-			} else if (userCandidate.verified === false) {
-				userCandidate.user_name = userName;
-				userCandidate.email = email;
-				userCandidate.verify_code = generateVerifyCode(6);
-				includes = true;
-				await userCandidate.save();
-				await nodemailer(
-					userCandidate.email,
-					'Verify code',
-					`Code: ${userCandidate.verify_code}`,
-				);
-				const verifyToken = generateVerifyToken({
-					id: userCandidate.id,
-				});
-				res.json({ verifyToken });
+			if (users.length >= 1) {
+				const userIds = users.map(user => user.id);
+				await User.delete(userIds);
 			}
-			if (!includes) {
-				const emailCandidate = await User.findOne({ email });
-				if (emailCandidate.verified === true) {
-					throw ApiError.BadRequest('User with email already exist');
-				} else if (emailCandidate.verified === false) {
-					emailCandidate.email = email;
-					emailCandidate.user_name = userName;
-					emailCandidate.verify_code = generateVerifyCode(6);
-					includes = true;
-					await emailCandidate.save();
-					await nodemailer(
-						emailCandidate.email,
-						'Verify code',
-						`Code: ${emailCandidate.verify_code}`,
-					);
-					const verifyToken = generateVerifyToken({
-						id: emailCandidate.id,
-					});
-					res.json({ verifyToken });
-				}
-
-				if (!includes) {
-					const userNameCandidate = await User.findOne({
-						user_name: userName,
-					});
-					if (userNameCandidate.verified === true) {
-						throw ApiError.BadRequest(
-							'User with email already exist',
-						);
-					} else if (userNameCandidate.verified === false) {
-						userNameCandidate.email = email;
-						userNameCandidate.user_name = userName;
-						userNameCandidate.verify_code = generateVerifyCode(6);
-						includes = true;
-						await userNameCandidate.save();
-						await nodemailer(
-							userNameCandidate.email,
-							'Verify code',
-							`Code: ${userNameCandidate.verify_code}`,
-						);
-						const verifyToken = generateVerifyToken({
-							id: userNameCandidate.id,
-						});
-						res.json({ verifyToken });
-					}
-				}
-			} else {
-				const hashPassowrd = await bcrypt.hash(password, 10);
-				const user = User.create({
-					user_name: userName,
-					email,
-					verify_code: generateVerifyCode(6),
-					password: hashPassowrd,
-				});
-				await user.save();
-				await nodemailer(
-					user.email,
-					'Verify code',
-					`Code: ${user.verify_code}`,
-				);
-				const verifyToken = generateVerifyToken({ id: user.id });
-				res.json({ verifyToken });
-			}
+			const verifyCode = generateVerifyCode(6);
+			const hashPassword = await bcrypt.hash(password, 10);
+			const user = User.create({
+				user_name: userName,
+				email,
+				password: hashPassword,
+				verify_code: verifyCode,
+			});
+			await user.save();
+			console.log(user.id);
+			const verifyToken = generateVerifyToken({ id: user.id });
+			await nodemailer(email, 'verify code', `<p>${verifyCode}<p>`);
+			res.json({ verifyToken });
 		} catch (err) {
 			next(err);
 		}
@@ -130,8 +70,6 @@ export default {
 				const accessToken = generateAccessToken({ id: user.id });
 				res.json({ verified: true, success: true, accessToken });
 			} else {
-				user.verify_code = generateVerifyCode(6);
-				await user.save();
 				throw ApiError.BadRequest('Invalid code');
 			}
 		} catch (err) {

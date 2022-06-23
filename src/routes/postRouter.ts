@@ -16,34 +16,43 @@ postRouter.post(
 	authMiddleware.userAuthToken,
 	validationMiddleware(createPostSchema, 'body'),
 	postController.createPost,
-);
+); // worked
 
 postRouter.delete(
 	'',
 	authMiddleware.userAuthToken,
 	validationMiddleware(idSchema.required, 'query'),
 	postController.deletePost,
-);
-
-postRouter.get(
-	'/myPosts',
-	authMiddleware.userAuthToken,
-	validationMiddleware(paginationSchema, 'query'),
-	postController.getMyPosts,
-);
+); // worked
 
 postRouter.patch(
 	'/like',
 	authMiddleware.userAuthToken,
 	validationMiddleware(idSchema.required, 'query'),
 	postController.likePost,
-);
+); // worked
 
 postRouter.get(
 	'/find',
 	authMiddleware.userAuthToken,
 	validationMiddleware(paginationSchema, 'query'),
 	postController.findPosts,
+); // worked
+
+postRouter.get(
+	'/user',
+	authMiddleware.userAuthToken,
+	validationMiddleware(paginationSchema, 'query'),
+	validationMiddleware(idSchema.optional, 'query'),
+	postController.getPostsByProfile,
+);
+
+postRouter.get(
+	'/liked',
+	authMiddleware.userAuthToken,
+	validationMiddleware(paginationSchema, 'query'),
+	validationMiddleware(idSchema.required, 'query'),
+	postController.getLikedPosts,
 );
 
 export default postRouter;

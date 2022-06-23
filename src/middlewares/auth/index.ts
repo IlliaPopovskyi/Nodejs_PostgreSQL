@@ -63,6 +63,7 @@ export default {
 				if (!verifiedData) {
 					next(ApiError.UnauthorizedError('invalid access token'));
 				}
+				console.log(verifiedData);
 				const user = await User.findOne(
 					{ id: verifiedData.id },
 					{ select: ['id'] },

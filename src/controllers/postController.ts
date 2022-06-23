@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
 import { NextFunction, Response } from 'express';
-import { Like, Not } from 'typeorm';
+import { Not, ILike } from 'typeorm';
 
 import ApiError from '../errors/apiError';
 import { IReqWithToken } from './interfaces';
@@ -119,7 +119,7 @@ export default {
 		}
 	},
 
-	async getMyPosts(
+	async getPostsByProfile(
 		req: IReqWithToken,
 		res: Response,
 		next: NextFunction,
@@ -132,10 +132,10 @@ export default {
 			const take = size;
 			const posts = await Post.find({
 				relations: ['creator', 'likes', 'photos', 'creator.main_photo'],
-				where: { creator: { id: profileId } },
+				where: { creator: { id: +req.query.id || profileId } },
 				take,
 				skip,
-				order: { created_at: -1 },
+				order: { created_at: 'DESC' },
 			});
 			res.json({ posts, page, size });
 		} catch (err) {
@@ -155,10 +155,10 @@ export default {
 			const skip = (page - 1) * size;
 			const take = size;
 			const posts = await Post.find({
-				relations: ['user', 'likes'],
+				relations: ['creator', 'likes'],
 				where: {
-					user: { id: Not(profileId) },
-					text: Like(`%${req.query.search || ''}%`),
+					creator: { id: Not(profileId) },
+					text: ILike(`%${req.query.search || ''}%`),
 				},
 				skip,
 				take,
