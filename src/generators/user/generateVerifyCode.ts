@@ -1,3 +1,5 @@
 export default (length: number): number => {
-	return Math.floor(1000 + Math.random() * 9 * (10 * length));
+	const a = 10 ** (length - 1);
+	const b = 9 * 10 ** (length - 1);
+	return Math.floor(a + Math.random() * b);
 };

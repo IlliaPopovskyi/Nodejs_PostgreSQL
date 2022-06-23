@@ -48,7 +48,7 @@ export default class Post extends BaseEntity {
 	@JoinColumn()
 	creator: User;
 
-	@ManyToMany(() => User, { onDelete: 'CASCADE' })
+	@ManyToMany(() => User)
 	@JoinTable()
 	likes: User[];
 	// user

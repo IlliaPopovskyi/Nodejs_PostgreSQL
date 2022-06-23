@@ -1,6 +1,6 @@
 /* eslint-disable no-plusplus */
 import { NextFunction, Response } from 'express';
-import { Like } from 'typeorm';
+import { ILike } from 'typeorm';
 
 import ApiError from '../errors/apiError';
 
@@ -10,7 +10,7 @@ import Photo from '../db/entities/Photo';
 import Post from '../db/entities/Post';
 
 import { IReqWithToken } from './interfaces';
-import { EAccessGroup, ETypeBlog } from '../enums/groupEnums';
+import { ETypeBlog } from '../enums/groupEnums';
 import { ETypePost } from '../enums/postEnums';
 
 export default {
@@ -48,11 +48,11 @@ export default {
 			const take = size;
 			const groups = await Group.find({
 				where: {
-					name: Like(`%${search}%`),
+					name: ILike(`%${search}%`),
 				},
 				skip,
 				take,
-				relations: ['members', 'mainPhoto'],
+				relations: ['main_photo', 'admin', 'moderators'],
 			});
 			res.json({ page, size, groups });
 		} catch (err) {
@@ -72,7 +72,7 @@ export default {
 				where: {
 					id: req.query.group,
 				},
-				relations: ['members', 'admin', 'mainPhoto', 'photos'],
+				relations: ['members', 'admin', 'main_photo', 'photos'],
 			});
 			if (!group) {
 				throw ApiError.BadRequest('Group not found');

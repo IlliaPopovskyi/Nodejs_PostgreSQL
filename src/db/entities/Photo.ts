@@ -75,6 +75,7 @@ export default class Photo extends BaseEntity {
 
 	@OneToOne(() => User, user => user.main_photo, {
 		nullable: true,
+		onDelete: 'CASCADE',
 	})
 	main_user_photo: User;
 	// user
